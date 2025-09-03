@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",       
+    "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -14,7 +14,7 @@
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "sweetalert2": "^11.22.5",
-    "tailwindcss": "^4.1.12"
+    "tailwindcss": "^4.1.12",
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
