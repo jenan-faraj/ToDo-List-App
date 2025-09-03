@@ -10,21 +10,29 @@ type ToDo = {
 function App() {
   const [toDos, setToDos] = useState<ToDo[]>([]);
   const [inputValue, setInputValue] = useState("");
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem("todos");
-    if (saved) {
+    // Load todos from localStorage
+    const savedToDos = localStorage.getItem("todos");
+    if (savedToDos) {
       try {
-        setToDos(JSON.parse(saved));
+        setToDos(JSON.parse(savedToDos));
       } catch (error) {
         console.error("Failed to load todos from localStorage:", error);
       }
     }
-  }, []);
 
-  useEffect(() => {
-    localStorage.setItem("todos", JSON.stringify(toDos));
-  }, [toDos]);
+    // Load dark mode preference from localStorage
+    const savedDarkMode = localStorage.getItem("darkMode");
+    if (savedDarkMode) {
+      try {
+        setIsDarkMode(JSON.parse(savedDarkMode));
+      } catch (error) {
+        console.error("Failed to load dark mode preference from localStorage:", error);
+      }
+    }
+  }, []);
 
   function addToDoList() {
     if (!inputValue.trim()) return;
@@ -36,24 +44,32 @@ function App() {
       isDeleted: false
     };
     
-    setToDos([...toDos, newTodo]);
+    const updatedToDos = [...toDos, newTodo];
+    setToDos(updatedToDos);
+    localStorage.setItem("todos", JSON.stringify(updatedToDos));
     setInputValue("");
   }
 
   function updateStatus(id: string, newStatus: ToDo["status"]) {
-    setToDos(toDos.map(todo => 
+    const updatedToDos = toDos.map(todo => 
       todo.id === id ? { ...todo, status: newStatus } : todo
-    ));
+    );
+    setToDos(updatedToDos);
+    localStorage.setItem("todos", JSON.stringify(updatedToDos));
   }
 
   function deleteFromToDoList(id: string) {
-    setToDos(toDos.map(todo => 
+    const updatedToDos = toDos.map(todo => 
       todo.id === id ? { ...todo, isDeleted: true } : todo
-    ));
+    );
+    setToDos(updatedToDos);
+    localStorage.setItem("todos", JSON.stringify(updatedToDos));
   }
 
   function deleteAll() {
-    setToDos(toDos.map(todo => ({ ...todo, isDeleted: true })));
+    const updatedToDos = toDos.map(todo => ({ ...todo, isDeleted: true }));
+    setToDos(updatedToDos);
+    localStorage.setItem("todos", JSON.stringify(updatedToDos));
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -62,81 +78,85 @@ function App() {
     }
   };
 
+  function toggleDarkMode() {
+    const newDarkModeState = !isDarkMode;
+    setIsDarkMode(newDarkModeState);
+    localStorage.setItem("darkMode", JSON.stringify(newDarkModeState));
+  }
+
   return (
-    <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
-      <h1 style={{ color: "#333", marginBottom: "20px" }}>My ToDo List</h1>
+    <div className={`min-h-screen p-5 font-sans transition-colors duration-300 ${
+      isDarkMode 
+        ? 'bg-gray-900 text-white' 
+        : 'bg-white text-gray-900'
+    }`}>
+      <div className="flex items-center justify-between mb-5">
+        <h1 className={`text-3xl font-bold ${
+          isDarkMode ? 'text-white' : 'text-gray-800'
+        }`}>
+          My ToDo List
+        </h1>
+        <button
+          onClick={toggleDarkMode}
+          className={`px-4 py-2 rounded-lg border transition-colors duration-300 ${
+            isDarkMode
+              ? 'bg-gray-800 border-gray-600 text-yellow-400 hover:bg-gray-700'
+              : 'bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200'
+          }`}
+        >
+          {isDarkMode ? '☀️ Light' : '🌙 Dark'}
+        </button>
+      </div>
       
-      <div style={{ marginBottom: "20px" }}>
+      <div className="mb-5">
         <input
           type="text"
           value={inputValue}
           placeholder="Enter a task"
           onChange={(e) => setInputValue(e.target.value)}
           onKeyPress={handleKeyPress}
-          style={{
-            padding: "8px 12px",
-            fontSize: "16px",
-            border: "1px solid #ddd",
-            borderRadius: "4px",
-            marginRight: "10px",
-            width: "300px"
-          }}
+          className={`px-3 py-2 text-base border rounded mr-2.5 w-80 transition-colors duration-300 ${
+            isDarkMode
+              ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400'
+              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+          }`}
         />
         <button 
           onClick={addToDoList}
-          style={{
-            padding: "8px 16px",
-            fontSize: "16px",
-            backgroundColor: "#007bff",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer"
-          }}
+          className="px-4 py-2 text-base bg-blue-600 text-white border-none rounded cursor-pointer hover:bg-blue-700 transition-colors duration-300"
         >
           Add Task
         </button>
         <button 
           onClick={deleteAll} 
-          style={{
-            padding: "8px 16px",
-            fontSize: "16px",
-            backgroundColor: "#dc3545",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-            marginLeft: "10px"
-          }}
+          className="px-4 py-2 text-base bg-red-600 text-white border-none rounded cursor-pointer ml-2.5 hover:bg-red-700 transition-colors duration-300"
         >
           Delete All
         </button>
       </div>
 
-      <ul style={{ listStyle: "none", padding: 0 }}>
+      <ul className="list-none p-0">
         {toDos
           .filter(todo => !todo.isDeleted)
           .map(todo => (
             <li 
               key={todo.id} 
-              style={{ 
-                margin: "10px 0", 
-                padding: "12px",
-                border: "1px solid #eee",
-                borderRadius: "4px",
-                backgroundColor: "#f9f9f9",
-                display: "flex",
-                alignItems: "center",
-                gap: "10px"
-              }}
+              className={`my-2.5 p-3 border rounded flex items-center gap-2.5 transition-colors duration-300 ${
+                isDarkMode
+                  ? 'bg-gray-800 border-gray-700'
+                  : 'bg-gray-50 border-gray-200'
+              }`}
             >
               <span 
-                style={{ 
-                  flex: 1,
-                  fontSize: "16px",
-                  textDecoration: todo.status === "document" ? "line-through" : "none",
-                  color: todo.status === "document" ? "#888" : "#333"
-                }}
+                className={`flex-1 text-base transition-colors duration-300 ${
+                  todo.status === "document" 
+                    ? isDarkMode 
+                      ? "line-through text-gray-500" 
+                      : "line-through text-gray-500"
+                    : isDarkMode
+                      ? "text-gray-200"
+                      : "text-gray-800"
+                }`}
               >
                 {todo.msg}
               </span>
@@ -146,12 +166,11 @@ function App() {
                 onChange={(e) =>
                   updateStatus(todo.id, e.target.value as ToDo["status"])
                 }
-                style={{
-                  padding: "4px 8px",
-                  fontSize: "14px",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px"
-                }}
+                className={`px-2 py-1 text-sm border rounded transition-colors duration-300 ${
+                  isDarkMode
+                    ? 'bg-gray-700 border-gray-600 text-white'
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
               >
                 <option value="toDo">To Do</option>
                 <option value="doing">Doing</option>
@@ -160,15 +179,7 @@ function App() {
               
               <button
                 onClick={() => deleteFromToDoList(todo.id)}
-                style={{
-                  padding: "4px 12px",
-                  fontSize: "14px",
-                  backgroundColor: "#dc3545",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer"
-                }}
+                className="px-3 py-1 text-sm bg-red-600 text-white border-none rounded cursor-pointer hover:bg-red-700 transition-colors duration-300"
               >
                 Delete
               </button>
@@ -177,30 +188,13 @@ function App() {
       </ul>
 
       {toDos.filter(todo => !todo.isDeleted).length === 0 && (
-        <p style={{ color: "#888", fontStyle: "italic", textAlign: "center", marginTop: "40px" }}>
+        <p className={`italic text-center mt-10 transition-colors duration-300 ${
+          isDarkMode ? 'text-gray-400' : 'text-gray-500'
+        }`}>
           No tasks yet. Add your first task above!
         </p>
       )}
 
-      {/* Debug info - remove this in production */}
-      <div style={{ 
-        marginTop: "40px", 
-        padding: "10px", 
-        backgroundColor: "#f8f9fa", 
-        border: "1px solid #dee2e6", 
-        borderRadius: "4px",
-        fontSize: "12px",
-        color: "#6c757d"
-      }}>
-        <strong>Debug Info:</strong>
-        <br />
-        Total todos in state: {toDos.length}
-        <br />
-        Visible todos: {toDos.filter(todo => !todo.isDeleted).length}
-        <br />
-        localStorage key 'todos': {localStorage.getItem("todos") ? "exists" : "empty"}
-        <br />
-      </div>
     </div>
   );
 }
